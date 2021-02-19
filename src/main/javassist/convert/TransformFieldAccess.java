@@ -24,63 +24,66 @@ import javassist.bytecode.CodeIterator;
 import javassist.bytecode.ConstPool;
 
 final public class TransformFieldAccess extends Transformer {
-    private String newClassname, newFieldname;
-    private String fieldname;
-    private CtClass fieldClass;
-    private boolean isPrivate;
+	private String newClassname, newFieldname;
+	private String fieldname;
+	private CtClass fieldClass;
+	private boolean isPrivate;
 
-    /* cache */
-    private int newIndex;
-    private ConstPool constPool;
+	/* cache */
+	private int newIndex;
+	private ConstPool constPool;
 
-    public TransformFieldAccess(Transformer next, CtField field,
-                                String newClassname, String newFieldname)
-    {
-        super(next);
-        this.fieldClass = field.getDeclaringClass();
-        this.fieldname = field.getName();
-        this.isPrivate = Modifier.isPrivate(field.getModifiers());
-        this.newClassname = newClassname;
-        this.newFieldname = newFieldname;
-        this.constPool = null;
-    }
+	public TransformFieldAccess(Transformer next, CtField field, String newClassname, String newFieldname) {
+		super(next);
+		this.fieldClass = field.getDeclaringClass();
+		this.fieldname = field.getName();
+		this.isPrivate = Modifier.isPrivate(field.getModifiers());
+		this.newClassname = newClassname;
+		this.newFieldname = newFieldname;
+		this.constPool = null;
+	}
 
-    @Override
-    public void initialize(ConstPool cp, CodeAttribute attr) {
-        if (constPool != cp)
-            newIndex = 0;
-    }
+	// Stefan0436: changed so a field name, its class and whether or not it is private is sufficient
+	public TransformFieldAccess(Transformer next, String oldFieldname, CtClass declaringClass, boolean isPrivate, String newClassname,
+			String newFieldname) {
+		super(next);
+		this.fieldClass = declaringClass;
+		this.fieldname = oldFieldname;
+		this.isPrivate = isPrivate;
+		this.newClassname = newClassname;
+		this.newFieldname = newFieldname;
+		this.constPool = null;
+	}
 
-    /**
-     * Modify GETFIELD, GETSTATIC, PUTFIELD, and PUTSTATIC so that
-     * a different field is accessed.  The new field must be declared
-     * in a superclass of the class in which the original field is
-     * declared.
-     */
-    @Override
-    public int transform(CtClass clazz, int pos,
-                         CodeIterator iterator, ConstPool cp)
-    {
-        int c = iterator.byteAt(pos);
-        if (c == GETFIELD || c == GETSTATIC
-                                || c == PUTFIELD || c == PUTSTATIC) {
-            int index = iterator.u16bitAt(pos + 1);
-            String typedesc
-                = TransformReadField.isField(clazz.getClassPool(), cp,
-                                fieldClass, fieldname, isPrivate, index);
-            if (typedesc != null) {
-                if (newIndex == 0) {
-                    int nt = cp.addNameAndTypeInfo(newFieldname,
-                                                   typedesc);
-                    newIndex = cp.addFieldrefInfo(
-                                        cp.addClassInfo(newClassname), nt);
-                    constPool = cp;
-                }
+	@Override
+	public void initialize(ConstPool cp, CodeAttribute attr) {
+		if (constPool != cp)
+			newIndex = 0;
+	}
 
-                iterator.write16bit(newIndex, pos + 1);
-            }
-        }
+	/**
+	 * Modify GETFIELD, GETSTATIC, PUTFIELD, and PUTSTATIC so that a different field
+	 * is accessed. The new field must be declared in a superclass of the class in
+	 * which the original field is declared.
+	 */
+	@Override
+	public int transform(CtClass clazz, int pos, CodeIterator iterator, ConstPool cp) {
+		int c = iterator.byteAt(pos);
+		if (c == GETFIELD || c == GETSTATIC || c == PUTFIELD || c == PUTSTATIC) {
+			int index = iterator.u16bitAt(pos + 1);
+			String typedesc = TransformReadField.isField(clazz.getClassPool(), cp, fieldClass, fieldname, isPrivate,
+					index);
+			if (typedesc != null) {
+				if (newIndex == 0) {
+					int nt = cp.addNameAndTypeInfo(newFieldname, typedesc);
+					newIndex = cp.addFieldrefInfo(cp.addClassInfo(newClassname), nt);
+					constPool = cp;
+				}
 
-        return pos;
-    }
+				iterator.write16bit(newIndex, pos + 1);
+			}
+		}
+
+		return pos;
+	}
 }
