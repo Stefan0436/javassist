@@ -39,6 +39,7 @@ public class TransformCall extends Transformer {
                          CtMethod substMethod)
     {
         this(next, origMethod.getName(), substMethod);
+        methodDescriptor = origMethod.getMethodInfo2().getDescriptor(); // Stefan0436: fixes something i ran into
         classname = origMethod.getDeclaringClass().getName();
     }
 
