@@ -42,6 +42,14 @@ public class TransformCall extends Transformer {
         classname = origMethod.getDeclaringClass().getName();
     }
 
+    public TransformCall(Transformer next, String oldClassname, String newClassname, CtMethod origMethod,
+                         CtMethod substMethod)
+    {
+        this(next, origMethod.getName(), substMethod);
+        classname = oldClassname;
+        this.newClassname = newClassname;
+    }
+
     public TransformCall(Transformer next, String oldMethodName,
                          CtMethod substMethod)
     {
