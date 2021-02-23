@@ -1030,7 +1030,7 @@ public class CodeConverter {
 		for (CtClass cls : classes) {
 			ClassFile file = cls.getClassFile2();
 			ConstPool cp = file.getConstPool();
-			List<MethodInfo> methods = cls.getClassFile2().getMethods();
+			List<MethodInfo> methods = file.getMethods();
 			for (MethodInfo method : methods) {
 				doit(cls, method, cp);
 			}
@@ -1051,7 +1051,7 @@ public class CodeConverter {
 		for (CtClass cls : classes) {
 			ClassFile file = cls.getClassFile2();
 			ConstPool cp = file.getConstPool();
-			List<MethodInfo> methods = cls.getClassFile2().getMethods();
+			List<MethodInfo> methods = file.getMethods();
 			for (MethodInfo method : methods) {
 				try {
 					doit(cls, method, cp);
@@ -1072,7 +1072,7 @@ public class CodeConverter {
 	public void instrument(CtClass cls) throws CannotCompileException {
 		ClassFile file = cls.getClassFile2();
 		ConstPool cp = file.getConstPool();
-		List<MethodInfo> methods = cls.getClassFile2().getMethods();
+		List<MethodInfo> methods = file.getMethods();
 		for (MethodInfo method : methods) {
 			doit(cls, method, cp);
 		}
