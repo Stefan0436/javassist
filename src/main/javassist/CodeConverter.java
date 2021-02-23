@@ -1057,7 +1057,7 @@ public class CodeConverter {
 					doit(cls, method, cp);
 					callback.accept(cls);
 				} catch (CannotCompileException ex) {
-					if (errorCallback.apply(cls, ex)) break;
+					if (!errorCallback.apply(cls, ex)) break;
 				}
 			}
 		}
