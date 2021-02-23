@@ -17,6 +17,8 @@
 package javassist;
 
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 import javassist.bytecode.BadBytecode;
 import javassist.bytecode.ClassFile;
@@ -498,7 +500,7 @@ public class CodeConverter {
 			throws CannotCompileException {
 		transformers = new TransformCall(transformers, oldMethodName, declaringClass, newMethod);
 	}
-	
+
 	/**
 	 * Correct invocations to a method that has been renamed. If a method is
 	 * renamed, calls to that method must be also modified so that the method with
@@ -519,9 +521,10 @@ public class CodeConverter {
 	 * @author Stefan0436
 	 * @see javassist.CtMethod#setName(String)
 	 */
-	public void redirectMethodCall(String oldMethodName, String oldMethodDescriptor, CtMethod newMethod, CtClass declaringClass)
-			throws CannotCompileException {
-		transformers = new TransformCall(transformers, oldMethodName, declaringClass.getName(), oldMethodDescriptor, newMethod);
+	public void redirectMethodCall(String oldMethodName, String oldMethodDescriptor, CtMethod newMethod,
+			CtClass declaringClass) throws CannotCompileException {
+		transformers = new TransformCall(transformers, oldMethodName, declaringClass.getName(), oldMethodDescriptor,
+				newMethod);
 	}
 
 	/**
@@ -537,15 +540,15 @@ public class CodeConverter {
 	 * (static method call, interface call, or private method call) are not
 	 * modified. Only the method name is changed.
 	 *
-	 * @param oldMethodName  the old name of the method.
+	 * @param oldMethodName       the old name of the method.
 	 * @param oldMethodDescriptor the descriptor of the old method.
-	 * @param newMethod      the method with the new name.
-	 * @param declaringClass the name of the class declaring the old method.
+	 * @param newMethod           the method with the new name.
+	 * @param declaringClass      the name of the class declaring the old method.
 	 * @author Stefan0436
 	 * @see javassist.CtMethod#setName(String)
 	 */
-	public void redirectMethodCall(String oldMethodName, String oldMethodDescriptor, CtMethod newMethod, String declaringClass)
-			throws CannotCompileException {
+	public void redirectMethodCall(String oldMethodName, String oldMethodDescriptor, CtMethod newMethod,
+			String declaringClass) throws CannotCompileException {
 		transformers = new TransformCall(transformers, oldMethodName, declaringClass, oldMethodDescriptor, newMethod);
 	}
 
@@ -1012,12 +1015,50 @@ public class CodeConverter {
 	 * @author Stefan0436
 	 */
 	public void instrument(CtClass[] classes) throws CannotCompileException {
+		instrument(classes, t -> {
+		});
+	}
+
+	/**
+	 * Instrument a set of classes
+	 * 
+	 * @param classes  the array of classes to instrument
+	 * @param callback function to call after a class has been instrumented
+	 * @author Stefan0436
+	 */
+	public void instrument(CtClass[] classes, Consumer<CtClass> callback) throws CannotCompileException {
 		for (CtClass cls : classes) {
 			ClassFile file = cls.getClassFile2();
 			ConstPool cp = file.getConstPool();
 			List<MethodInfo> methods = cls.getClassFile2().getMethods();
 			for (MethodInfo method : methods) {
 				doit(cls, method, cp);
+				callback.accept(cls);
+			}
+		}
+	}
+
+	/**
+	 * Instrument a set of classes
+	 * 
+	 * @param classes       the array of classes to instrument
+	 * @param callback      function to call after a class has been instrumented
+	 * @param errorCallback function to call on error (should return false if the instrumentation must stop)
+	 * @author Stefan0436
+	 */
+	public void instrument(CtClass[] classes, Consumer<CtClass> callback,
+			BiFunction<CtClass, CannotCompileException, Boolean> errorCallback) {
+		for (CtClass cls : classes) {
+			ClassFile file = cls.getClassFile2();
+			ConstPool cp = file.getConstPool();
+			List<MethodInfo> methods = cls.getClassFile2().getMethods();
+			for (MethodInfo method : methods) {
+				try {
+					doit(cls, method, cp);
+					callback.accept(cls);
+				} catch (CannotCompileException ex) {
+					if (errorCallback.apply(cls, ex)) break;
+				}
 			}
 		}
 	}
