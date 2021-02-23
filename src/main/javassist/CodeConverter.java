@@ -1033,8 +1033,8 @@ public class CodeConverter {
 			List<MethodInfo> methods = cls.getClassFile2().getMethods();
 			for (MethodInfo method : methods) {
 				doit(cls, method, cp);
-				callback.accept(cls);
 			}
+			callback.accept(cls);
 		}
 	}
 
@@ -1055,11 +1055,11 @@ public class CodeConverter {
 			for (MethodInfo method : methods) {
 				try {
 					doit(cls, method, cp);
-					callback.accept(cls);
 				} catch (CannotCompileException ex) {
 					if (!errorCallback.apply(cls, ex)) break;
 				}
 			}
+			callback.accept(cls);
 		}
 	}
 
